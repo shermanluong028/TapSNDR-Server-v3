@@ -1,0 +1,161 @@
+(() => {
+    if (window.TapSNDRTicketsTable) return;
+    window.TapSNDRTicketsTable = (() => {
+        const partId = "tapsndr-table-tickets";
+
+        const getInstance = (assignedId) => {
+            const selectors = (() => {
+                const self = "." + partId + "." + assignedId;
+                return {
+                    self,
+                    table: self + " table",
+                    controls: {
+                        searchKey: self + " ." + partId + "-control-search_key",
+                        status: self + " ." + partId + "-control-status",
+                    },
+                };
+            })();
+
+            const states = {
+                searchParams: {},
+            };
+            const props = {};
+
+            const getTableData = (data) => {
+                const mapBadgeToStatus = {
+                    pending: '<span class="badge badge-light-warning">Pending</span>',
+                    sent: '<span class="badge badge-light-warning">Sent</span>',
+                    validated: '<span class="badge badge-light-warning">Validated</span>',
+                    processing: '<span class="badge badge-light-warning">Processing</span>',
+                    completed: '<span class="badge badge-light-success">Completed</span>',
+                    reported: '<span class="badge badge-light-danger">Reported</span>',
+                    declined: '<span class="badge badge-light-danger">Declined</span>',
+                    error: '<span class="badge badge-light-danger">Error</span>',
+                };
+                const tData = [];
+                for (let i = 0; i < data.length; i++) {
+                    const rData = { ...data[i] };
+                    rData._id = data[i].id;
+                    rData.created_at = TapSNDRUtils.getDateHTML(data[i].created_at);
+                    rData.id = TapSNDRUtils.getIDHTML(data[i].id);
+                    rData.domain =
+                        "<a class='text-decoration-underline' href='https://" +
+                        data[i].domain.domain +
+                        "' target='_blank'>" +
+                        data[i].domain.domain +
+                        "</a><br>";
+                    rData.amount = accounting.formatMoney(data[i].amount);
+                    rData.qrcode =
+                        "<a href='" +
+                        data[i].image_path +
+                        "' target='_blank'><img src='" +
+                        data[i].image_path +
+                        "' alt='' class='w-50px h-50px rounded object-fit-cover' /></a>";
+                    rData.status = mapBadgeToStatus[data[i].status] || "-";
+                    if (data[i].status === "completed") {
+                        rData.completion_image =
+                            "<a href='" +
+                            data[i].completion_images[0]?.image_path +
+                            "' target='_blank'><img src='" +
+                            data[i].completion_images[0]?.image_path +
+                            "' alt='' class='w-50px h-50px rounded object-fit-cover' /></a>";
+                    } else {
+                        rData.completion_image = "-";
+                    }
+                    rData.completed_at = TapSNDRUtils.getDateHTML(data[i].completed_at);
+                    tData.push(rData);
+                }
+                return tData;
+            };
+
+            const initDataTable = () => {
+                $(selectors.table).DataTable({
+                    processing: true,
+                    serverSide: true,
+                    ajax: ({ start, length, draw }, callback) => {
+                        props.onSearchParamsChanged(
+                            {
+                                ...states.searchParams,
+                                pageIndex: start / length,
+                                pageLength: length,
+                            },
+                            ({ total, data }) => {
+                                callback({
+                                    draw,
+                                    recordsTotal: total,
+                                    recordsFiltered: total,
+                                    data: getTableData(data),
+                                });
+                            }
+                        );
+                    },
+                    columns: [
+                        { title: "Created At", data: "created_at" },
+                        { title: "ID", data: "id" },
+                        { title: "Ticket ID", data: "ticket_id" },
+                        { title: "Domain", data: "domain" },
+                        {
+                            title: "Facebook&nbsp;Name&nbsp;of&nbsp;Customer",
+                            data: "facebook_name",
+                        },
+                        { title: "Game Name", data: "game" },
+                        { title: "Game ID", data: "game_id" },
+                        { title: "Amount", data: "amount" },
+                        {
+                            title: "Payment&nbsp;Method",
+                            data: "payment_method",
+                        },
+                        { title: "Payment&nbsp;Tag", data: "payment_tag" },
+                        { title: "Account&nbsp;Name", data: "account_name" },
+                        { title: "QR Code", data: "qrcode" },
+                        { title: "Status", data: "status" },
+                        { title: "Completion Image", data: "completion_image" },
+                        { title: "Completed At", data: "completed_at" },
+                    ],
+                    ordering: false,
+                    pageLength: 25,
+                    lengthMenu: [
+                        [25, 50, 100, 200],
+                        [25, 50, 100, 200],
+                    ],
+                });
+            };
+
+            const reloadData = () => {
+                $(selectors.table).DataTable().ajax.reload();
+            };
+
+            const onSearchParamsChanged = () => {
+                reloadData();
+            };
+
+            const onSearchKeyChanged = function () {
+                states.searchParams.searchKey = $(this).val();
+                onSearchParamsChanged();
+            };
+
+            const onStatusChanged = function () {
+                states.searchParams.status = $(this).val();
+                onSearchParamsChanged();
+            };
+
+            const setEvents = () => {
+                $(selectors.controls.searchKey).on("change", onSearchKeyChanged);
+                $(selectors.controls.status).on("change", onStatusChanged);
+            };
+
+            return {
+                init: ({ onSearchParamsChanged }) => {
+                    props.onSearchParamsChanged = onSearchParamsChanged;
+                    initDataTable();
+                    setEvents();
+                },
+                reloadData,
+            };
+        };
+
+        return {
+            getInstance,
+        };
+    })();
+})();

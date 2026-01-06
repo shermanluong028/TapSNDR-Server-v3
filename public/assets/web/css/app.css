@@ -1,0 +1,92 @@
+[data-bs-theme="light"] {
+    --bs-pink: #ff00ef;
+    --bs-pink-rgb: 255, 0, 239;
+    --bs-pink-inverse: #ffffff;
+    --bs-text-pink: #ff00ef;
+}
+
+[data-bs-theme="dark"] {
+    --bs-pink: #ff00ef;
+    --bs-pink-rgb: 255, 0, 239;
+    --bs-pink-inverse: #ffffff;
+    --bs-text-pink: #ff00ef;
+}
+
+.table-responsive {
+    -webkit-overflow-scrolling: auto !important;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.2rem !important;
+}
+
+.image-input-placeholder {
+    background-image: url("/assets/web/media/svg/files/blank-image.svg");
+}
+
+[data-bs-theme="dark"] .image-input-placeholder {
+    background-image: url("/assets/web/media/svg/files/blank-image-dark.svg");
+}
+
+.auth-page-bg {
+    background-image: url("/assets/web/media/bg-auth.png");
+}
+
+[data-bs-theme="dark"] .auth-page-bg {
+    background-image: url("/assets/web/media/bg-auth-dark.png");
+}
+
+.\!text-start {
+    text-align: start !important;
+}
+
+.text-pink {
+    color: var(--bs-text-pink) !important;
+}
+
+.badge-pink {
+    color: var(--bs-pink-inverse);
+    background-color: var(--bs-pink);
+}
+
+.border-pink {
+    --bs-border-opacity: 1;
+    border-color: rgba(var(--bs-pink-rgb), var(--bs-border-opacity)) !important;
+}
+
+.w-\[150px\] {
+    width: 150px;
+}
+
+.me-\[\-3px\] {
+    margin-right: -3px !important;
+}
+
+.me-\[\-20px\] {
+    margin-right: -20px !important;
+}
+
+.mb-\[\-20px\] {
+    margin-bottom: -20px !important;
+}
+
+.start-auto {
+    left: auto !important;
+}
+
+.z-auto {
+    z-index: auto !important;
+}
+
+.z-5 {
+    z-index: 5 !important;
+}
+
+.bg-red {
+    background-color: red !important;
+}
+
+.checked\:bg-success:checked {
+    --bs-bg-rgb-color: var(--bs-success-rgb);
+    background-color: var(--bs-success) !important;
+}

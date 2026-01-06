@@ -1,0 +1,8 @@
+.tapsndr-settings-ticket-payment_methods-table > :not(caption) > * > * {
+    padding: 1rem !important;
+}
+
+.tapsndr-settings-ticket-payment_methods-table th,
+.tapsndr-settings-ticket-payment_methods-table td {
+    vertical-align: middle;
+}

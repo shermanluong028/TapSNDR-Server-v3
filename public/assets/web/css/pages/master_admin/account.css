@@ -1,0 +1,4 @@
+.tapsndr-account-pending_deposits > .card-body table th,
+.tapsndr-account-pending_deposits > .card-body table td {
+    vertical-align: middle;
+}
