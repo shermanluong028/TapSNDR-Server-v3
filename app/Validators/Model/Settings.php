@@ -8,7 +8,7 @@ class Settings extends Validator
 {
     public function __construct()
     {
-        parent::__construct(\App\Models\FormDomain::class);
+        parent::__construct(\App\Models\Settings::class);
     }
 
     protected function validateEmpty($data, $allowedFields): mixed
