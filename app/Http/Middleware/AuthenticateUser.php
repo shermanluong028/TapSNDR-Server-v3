@@ -18,13 +18,16 @@ class AuthenticateUser
         '/^GET-\\/accounts\/([^\/]+)$/'                           => ['master_admin'],
         'GET-/transactions'                                       => ['master_admin', 'user'],
         'GET-/withdrawals'                                        => ['master_admin'],
-        'GET-/user_activities'                                    => ['master_admin'],
+        'GET-/user_activities'                                    => ['master_admin:tapsndr'],
         'GET-/settings/wallet'                                    => ['master_admin'],
         'GET-/settings/ticket/payment_methods'                    => ['master_admin'],
         'GET-/distributor/clients'                                => ['distributor'],
         // 'GET-/distributor/settings'                               => ['distributor'],
         'GET-/player/payment_details'                             => ['player'],
         'GET-/player/vendors'                                     => ['player'],
+        'GET-/tapsndr/dashboard/wallets'                          => ['master_admin:tapsndr'],
+        'GET-/tapsndr/accounts'                                   => ['master_admin:tapsndr'],
+        'GET-/tapsndr/transactions'                               => ['master_admin:tapsndr'],
         'POST-/web/auth/signout'                                  => ['*'],
         'GET-/web/users'                                          => ['master_admin', 'distributor'],
         'GET-/web/users/stats'                                    => ['master_admin'],
@@ -43,7 +46,7 @@ class AuthenticateUser
         'POST-/web/wallets'                                       => ['master_admin'],
         'GET-/api/deposit/address'                                => ['*'],
         'POST-/api/deposit'                                       => ['*'],
-        'GET-/web/user_activities'                                => ['master_admin'],
+        'GET-/web/user_activities'                                => ['master_admin:tapsndr'],
         'DELETE-/web/crypto_addresses'                            => ['master_admin'],
         'GET-/web/domains'                                        => ['master_admin', 'distributor'],
         '/^GET-\/web\/domains\/([^\/]+)$/'                        => ['master_admin', 'distributor'],
@@ -72,7 +75,9 @@ class AuthenticateUser
         'GET-/web/transactions'                                   => ['master_admin', 'user'],
         'GET-/web/transactions/stats'                             => ['master_admin', 'user'],
         'POST-/web/transactions'                                  => ['master_admin'],
+        'GET-/api/settings'                                       => ['*'],
         'POST-/web/settings'                                      => ['*'],
+        'POST-/api/settings'                                      => ['*'],
         'GET-/web/crypto_wallets'                                 => ['master_admin'],
     ];
 
@@ -106,10 +111,11 @@ class AuthenticateUser
             $currentUser = Auth::user();
             // if user has already signed in and url requested is auth page url, redirect default page per role
             $mapRedirectUrlToRole = [
-                'master_admin' => '/dashboard/tickets',
-                'distributor'  => '/distributor/clients',
-                'user'         => '/tickets',
-                'player'       => '/player/payment_details',
+                'master_admin'         => '/dashboard/wallets',
+                'master_admin:tapsndr' => '/tapsndr/dashboard/wallets',
+                'distributor'          => '/distributor/clients',
+                'user'                 => '/tickets',
+                'player'               => '/player/payment_details',
             ];
             for ($i = 0; $i < count($authPageRoutes); $i++) {
                 if (

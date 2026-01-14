@@ -9,7 +9,7 @@ class Settings extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['user_id'];
+    protected $fillable = ['user_id', 'low_balance_threshold'];
 
     public function user()
     {
@@ -19,15 +19,18 @@ class Settings extends Model
     public static function getAllowedFields($role, $op)
     {
         $mapRolesToFields = [
-            'id'         => [
+            'id'                    => [
                 'r' => ['*'],
             ],
-            'user_id'    => [
+            'user_id'               => [
                 'r' => ['*'],
-                'c' => ['*'],
-                'u' => ['*'],
             ],
-            'created_at' => [
+            'low_balance_threshold' => [
+                'r' => ['user'],
+                'c' => ['user'],
+                'u' => ['user'],
+            ],
+            'created_at'            => [
             ],
         ];
         return Utils::getAllowedFields($mapRolesToFields, $role, $op);
