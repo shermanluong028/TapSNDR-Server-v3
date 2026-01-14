@@ -1,11 +1,7 @@
 <?php
 
-use App\Models\CryptoTransaction;
-use App\Models\Ticket;
-use App\Models\User;
-use App\Models\Wallet;
+use App\Models\Settings;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 header('Content-Type: application/json');
@@ -574,68 +570,78 @@ try {
                     $remote_addr = $_SERVER['REMOTE_ADDR'] ?? null;
                     Log::channel('proxy')->info("ID: $ticket_id, IP: $remote_addr, Image: $validation_image");
 
-                    if ($ticket_data['coinflow_user_id'] && $ticket_data['coinflow_account']) {
-                        $response = Http::withHeaders([
-                            'Content-Type'  => 'application/json',
-                            'Accept'        => 'application/json',
-                            'Authorization' => env('COINFLOW_API_KEY'),
-                        ])->post("https://api-sandbox.coinflow.cash/api/merchant/withdraws/payout/delegated", [
-                            "amount"         => [
-                                "cents" => round((1 - ($commission_data['admin_customer'] + $commission_data['distributor_customer']) / 100) * $ticket_data['amount'] * 100),
-                            ],
-                            "speed"          => "asap",
-                            "account"        => $ticket_data['coinflow_account'],
-                            "userId"         => $ticket_data['coinflow_user_id'],
-                            "idempotencyKey" => $ticket_data['id'] . "",
-                        ]);
-                        Log::channel('proxy')->info($response);
+                    // if ($ticket_data['coinflow_user_id'] && $ticket_data['coinflow_account']) {
+                    //     $response = Http::withHeaders([
+                    //         'Content-Type'  => 'application/json',
+                    //         'Accept'        => 'application/json',
+                    //         'Authorization' => env('COINFLOW_API_KEY'),
+                    //     ])->post("https://api-sandbox.coinflow.cash/api/merchant/withdraws/payout/delegated", [
+                    //         "amount"         => [
+                    //             "cents" => round((1 - ($commission_data['admin_customer'] + $commission_data['distributor_customer']) / 100) * $ticket_data['amount'] * 100),
+                    //         ],
+                    //         "speed"          => "asap",
+                    //         "account"        => $ticket_data['coinflow_account'],
+                    //         "userId"         => $ticket_data['coinflow_user_id'],
+                    //         "idempotencyKey" => $ticket_data['id'] . "",
+                    //     ]);
+                    //     Log::channel('proxy')->info($response);
 
-                        $response_data = $response->json();
+                    //     $response_data = $response->json();
 
-                        if (! $response_data || ! isset($response_data['signature'])) {
-                            throw new Exception("Internal Server Error");
-                        }
+                    //     if (! $response_data || ! isset($response_data['signature'])) {
+                    //         throw new Exception("Internal Server Error");
+                    //     }
 
-                        Ticket::where('ticket_id', $ticket_id)->update([
-                            'coinflow_signature' => $response_data['signature'],
-                            'completed_at'       => now()->toDateTimeString(),
-                        ]);
+                    //     Ticket::where('ticket_id', $ticket_id)->update([
+                    //         'coinflow_signature' => $response_data['signature'],
+                    //         'completed_at'       => now()->toDateTimeString(),
+                    //     ]);
 
-                        $admin = User::whereHas('roles', function ($query) {
-                            $query->where('name', 'admin');
-                        })->first();
-                        $balanceBefore = $admin->wallet->balance;
-                        $commission    = $commission_data['admin_client'] / 100 * $ticket_data['amount'];
-                        $admin->wallet->increment('balance', $ticket_data['amount'] + $commission);
+                    //     $admin = User::whereHas('roles', function ($query) {
+                    //         $query->where('name', 'admin');
+                    //     })->first();
+                    //     $balanceBefore = $admin->wallet->balance;
+                    //     $commission    = $commission_data['admin_client'] / 100 * $ticket_data['amount'];
+                    //     $admin->wallet->increment('balance', $ticket_data['amount'] + $commission);
 
-                        CryptoTransaction::create([
-                            'user_id'          => $admin->id,
-                            'amount'           => $ticket_data['amount'] + $commission,
-                            'description'      => 'Admin Ticket ' . $ticket_id . ' Completion Profit',
-                            'transaction_hash' => $ticket_id,
-                            'transaction_type' => 'credit',
-                            'balance_before'   => $balanceBefore,
-                        ]);
+                    //     CryptoTransaction::create([
+                    //         'user_id'          => $admin->id,
+                    //         'amount'           => $ticket_data['amount'] + $commission,
+                    //         'description'      => 'Admin Ticket ' . $ticket_id . ' Completion Profit',
+                    //         'transaction_hash' => $ticket_id,
+                    //         'transaction_type' => 'credit',
+                    //         'balance_before'   => $balanceBefore,
+                    //     ]);
 
-                        $client = User::find($client_id);
+                    //     $client = User::find($client_id);
 
-                        if ($client->distributor) {
-                            $balanceBefore = $client->distributor->wallet->balance;
-                            $commission    = $commission_data['distributor_client'] / 100 * $ticket_data['amount'];
-                            $client->distributor->wallet->increment('balance', $commission);
+                    //     if ($client->distributor) {
+                    //         $balanceBefore = $client->distributor->wallet->balance;
+                    //         $commission    = $commission_data['distributor_client'] / 100 * $ticket_data['amount'];
+                    //         $client->distributor->wallet->increment('balance', $commission);
 
-                            CryptoTransaction::create([
-                                'user_id'          => $client->distributor->id,
-                                'amount'           => $commission,
-                                'description'      => 'Distributor Ticket ' . $ticket_id . ' Completion Profit',
-                                'transaction_hash' => $ticket_id,
-                                'transaction_type' => 'credit',
-                                'balance_before'   => $balanceBefore,
-                            ]);
-                        }
+                    //         CryptoTransaction::create([
+                    //             'user_id'          => $client->distributor->id,
+                    //             'amount'           => $commission,
+                    //             'description'      => 'Distributor Ticket ' . $ticket_id . ' Completion Profit',
+                    //             'transaction_hash' => $ticket_id,
+                    //             'transaction_type' => 'credit',
+                    //             'balance_before'   => $balanceBefore,
+                    //         ]);
+                    //     }
 
-                        $new_status = 'completed';
+                    //     $new_status = 'completed';
+                    // }
+
+                    $error = null;
+
+                    $settings = Settings::where('user_id', $client_id)->first();
+
+                    if ($settings?->low_balance_threshold > $balance_after) {
+                        $error .= 'The client balance is below ' . $settings?->low_balance_threshold . ', the set threshold.';
                     }
+                } else {
+                    $error = null;
                 }
                 // Update the ticket status
                 $query  = "UPDATE tickets SET status = ? ";
@@ -643,11 +649,11 @@ try {
 
                 // Add chat_group_id if provided
                 if ($chat_group_id !== null) {
-                    $query .= ", chat_group_id = ? ";
-                    $params[] = $chat_group_id;
+                    $query    .= ", chat_group_id = ? ";
+                    $params[]  = $chat_group_id;
                 }
 
-                $query .= "WHERE ticket_id = ?";
+                $query    .= "WHERE ticket_id = ?";
                 $params[] = $ticket_id;
 
                 // $stmt = $mysqli->prepare($query);
@@ -680,6 +686,7 @@ try {
                 return [
                     'status'  => 'success',
                     'message' => 'Ticket updated successfully',
+                    'details' => $error,
                 ];
 
             } catch (Exception $e) {
@@ -1761,20 +1768,20 @@ try {
 
                 if ($message_id && $chat_id) {
                     // If we have both, use exact match
-                    $query .= "t.telegram_message_id = ? AND t.telegram_chat_id = ?";
-                    $params = [$message_id, $chat_id];
-                    $types  = "ss";
+                    $query  .= "t.telegram_message_id = ? AND t.telegram_chat_id = ?";
+                    $params  = [$message_id, $chat_id];
+                    $types   = "ss";
                 } else if ($chat_id) {
                     // If we only have chat_id, find most recent notification in that chat
                     $query .= "t.telegram_chat_id = ? AND t.status IN ('completed', 'completed_notified')
                               ORDER BY t.completed_at DESC LIMIT 1";
-                    $params = [$chat_id];
-                    $types  = "s";
+                    $params  = [$chat_id];
+                    $types   = "s";
                 } else {
                     // If we only have message_id (unlikely), try to match it
-                    $query .= "t.telegram_message_id = ? AND t.status IN ('completed', 'completed_notified')";
-                    $params = [$message_id];
-                    $types  = "s";
+                    $query  .= "t.telegram_message_id = ? AND t.status IN ('completed', 'completed_notified')";
+                    $params  = [$message_id];
+                    $types   = "s";
                 }
 
                 $stmt = $mysqli->prepare($query);
